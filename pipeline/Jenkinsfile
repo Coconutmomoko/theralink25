@@ -1,0 +1,29 @@
+pipeline {
+    agent any
+    environment {
+        VENV_PATH = "${WORKSPACE}/venv"
+        GIT_BRANCH = 'main' 
+        REPO_NAME = "MOVEdigi-videoCall"
+    }
+    stages {
+        stage('Clean Workspace and Git Clone') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'GIT_CREDENTIALS', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        sh """
+                            bash -c '
+                            if [ -d "${WORKSPACE}/${REPO_NAME}" ]; then
+                                echo "Removing existing repository..."
+                                rm -rf "${WORKSPACE}/${REPO_NAME}"
+                            fi
+
+                            # Clone the repository for the first stage
+                            git clone -b ${GIT_BRANCH} https://${GIT_USER}:${GIT_PASS}@github.com/nugets241/MOVEdigi-videoCall.git
+                            '
+                        """
+                    }
+                }
+            }
+        }
+    }
+}
