@@ -1,6 +1,7 @@
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 const startCallButton = document.getElementById("startCall");
+const endCallButton = document.getElementById("endCall");
 const socket = io();
 
 let localStream;
@@ -14,6 +15,7 @@ const servers = {
   ],
 };
 
+// When "Start Call" button is clicked
 startCallButton.addEventListener("click", async () => {
   localStream = await navigator.mediaDevices.getUserMedia({
     video: true,
@@ -39,6 +41,27 @@ startCallButton.addEventListener("click", async () => {
   const offer = await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
   socket.emit("offer", offer);
+});
+
+// When "End Call" button is clicked
+endCallButton.addEventListener("click", () => {
+  // Stop all tracks in the local stream
+  if (localStream) {
+    localStream.getTracks().forEach((track) => track.stop());
+  }
+
+  // Close the peer connection
+  if (peerConnection) {
+    peerConnection.close();
+    peerConnection = null;
+  }
+
+  // Clear the video elements
+  localVideo.srcObject = null;
+  remoteVideo.srcObject = null;
+
+  // Notify the other peer that the call has ended
+  socket.emit("endCall");
 });
 
 socket.on("offer", async (offer) => {
