@@ -21,16 +21,14 @@ let hasVideoDevice = false;
 let hasAudioDevice = false;
 
 const servers = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-  ],
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
 // Check available devices
 async function checkDevices() {
   const devices = await navigator.mediaDevices.enumerateDevices();
-  hasVideoDevice = devices.some(device => device.kind === "videoinput");
-  hasAudioDevice = devices.some(device => device.kind === "audioinput");
+  hasVideoDevice = devices.some((device) => device.kind === "videoinput");
+  hasAudioDevice = devices.some((device) => device.kind === "audioinput");
 }
 
 // Function to start media
@@ -59,7 +57,9 @@ function updateToggleButtons() {
   toggleVideoButton.disabled = !hasVideoDevice;
   toggleAudioButton.disabled = !hasAudioDevice;
 
-  toggleVideoButton.textContent = isVideoEnabled ? "Turn Video Off" : "Turn Video On";
+  toggleVideoButton.textContent = isVideoEnabled
+    ? "Turn Video Off"
+    : "Turn Video On";
   toggleAudioButton.textContent = isAudioEnabled ? "Mute" : "Unmute";
 }
 
@@ -68,7 +68,9 @@ async function startCall() {
   await startMedia();
 
   peerConnection = new RTCPeerConnection(servers);
-  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+  localStream
+    .getTracks()
+    .forEach((track) => peerConnection.addTrack(track, localStream));
 
   peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
@@ -88,7 +90,7 @@ async function startCall() {
 // Function to end a call
 function endCall() {
   if (localStream) {
-    localStream.getTracks().forEach(track => track.stop());
+    localStream.getTracks().forEach((track) => track.stop());
   }
   if (peerConnection) {
     peerConnection.close();
@@ -104,7 +106,9 @@ function endCall() {
 toggleVideoButton.addEventListener("click", () => {
   if (!hasVideoDevice) return;
   isVideoEnabled = !isVideoEnabled;
-  localStream.getVideoTracks().forEach(track => (track.enabled = isVideoEnabled));
+  localStream
+    .getVideoTracks()
+    .forEach((track) => (track.enabled = isVideoEnabled));
   updateToggleButtons();
 });
 
@@ -112,7 +116,9 @@ toggleVideoButton.addEventListener("click", () => {
 toggleAudioButton.addEventListener("click", () => {
   if (!hasAudioDevice) return;
   isAudioEnabled = !isAudioEnabled;
-  localStream.getAudioTracks().forEach(track => (track.enabled = isAudioEnabled));
+  localStream
+    .getAudioTracks()
+    .forEach((track) => (track.enabled = isAudioEnabled));
   updateToggleButtons();
 });
 
@@ -125,7 +131,9 @@ socket.on("offer", async (offer) => {
   if (!peerConnection) {
     await startMedia();
     peerConnection = new RTCPeerConnection(servers);
-    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    localStream
+      .getTracks()
+      .forEach((track) => peerConnection.addTrack(track, localStream));
 
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
@@ -151,3 +159,7 @@ socket.on("answer", async (answer) => {
 socket.on("candidate", async (candidate) => {
   await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
 });
+
+// Join the room
+const roomId = window.location.pathname.split("/")[1];
+socket.emit("join-room", roomId);
