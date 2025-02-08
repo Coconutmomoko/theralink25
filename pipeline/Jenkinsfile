@@ -2,8 +2,12 @@ pipeline {
     agent any
     environment {
         VENV_PATH = "${WORKSPACE}/venv"
-        GIT_BRANCH = 'main' 
+        GIT_BRANCH = 'main'  // Branch for both the first stage and deploy
         REPO_NAME = "MOVEdigi-videoCall"
+        IMG_NAME = "movedigi-videocall-image"
+        CONTAINER_NAME = "movedigi-videocall-instance"
+        DEPLOY_DIR = "deploy_app"
+        REMOTE_HOST = "subria@86.50.231.70"  // Replace with actual remote server
     }
     stages {
         stage('Clean Workspace and Git Clone') {
@@ -25,5 +29,69 @@ pipeline {
                 }
             }
         }
+
+        stage('Build and Deploy in remote server') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'SUDO_PASSWORD_DEP', variable: 'SUDO_PASS')]) {
+                        withCredentials([usernamePassword(credentialsId: 'GIT_CREDENTIALS', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                            withCredentials([file(credentialsId: 'SSH_PRIVATE_KEY_FILE_DEP', variable: 'SSH_KEY_PATH')]) {
+                                sh """
+                                    # Ensure the SSH key file does not exist before we create it
+                                    rm -f ${WORKSPACE}/id_rsa
+
+                                    # Copy the secret key file to the workspace
+                                    cp ${SSH_KEY_PATH} ${WORKSPACE}/id_rsa
+                                    chmod 600 ${WORKSPACE}/id_rsa
+
+                                    # SSH into the remote server and execute deployment commands
+                                    ssh -i ${WORKSPACE}/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=180 -o ServerAliveInterval=30 -T ${REMOTE_HOST} << 'EOF'
+
+                                        # Check if old deploy folder exists, and if so, then remove
+                                        if [ -d "${DEPLOY_DIR}" ]; then
+                                            echo "Removing existing ${DEPLOY_DIR} folder..."
+                                            rm -rf ${DEPLOY_DIR}
+                                        fi
+
+                                        # Create a new deploy folder for the deployment
+                                        echo "Creating new folder ${DEPLOY_DIR}..."
+                                        mkdir ${DEPLOY_DIR}
+                                        cd ${DEPLOY_DIR}
+
+                                        # Clone the repository for deployment
+                                        echo "Cloning the repository for deployment..."
+                                        git clone -b ${GIT_BRANCH} https://${GIT_USER}:${GIT_PASS}@github.com/nugets241/MOVEdigi-videoCall.git .
+
+                                        # Stop and force-remove any existing Docker containers using sudo
+                                        echo "Stopping and removing existing Docker container..."
+                                        echo "${SUDO_PASS}" | sudo -S docker rm -f ${CONTAINER_NAME} || true
+
+                                        # Remove existing Docker image
+                                        echo "Removing existing Docker image..."
+                                        echo "${SUDO_PASS}" | sudo -S docker rmi -f ${IMG_NAME} || true
+
+                                        # Run docker build and start the container using sudo
+                                        echo "Creating docker image..."
+                                        echo "${SUDO_PASS}" | sudo -S docker build -t ${IMG_NAME} . || exit 1
+
+                                        echo "Running new container..."
+                                        echo "${SUDO_PASS}" | sudo -S docker run --name ${CONTAINER_NAME} -d -p 8080:5000 --restart unless-stopped ${IMG_NAME} || exit 1
+
+                                        echo "Deployment complete!"
+
+                                    EOF
+
+                                    # Clean up the SSH private key
+                                    rm -f ${WORKSPACE}/id_rsa
+                                """
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
+
     }
 }
