@@ -24,20 +24,27 @@ if (process.env.USE_HTTPS) {
 
 const io = socketIo(server, { secure: true });
 
+app.get("/", (req, res) => {
+  res.redirect(`/${uuidv4()}`);
+});
+
 app.use(express.static(path.join(__dirname, "../frontend")));
+
+app.get("/:room", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
 
 io.on("connection", (socket) => {
   socket.on("offer", (data) => {
-    socket.broadcast.emit("offer", data);
+    socket.to(roomId).emit("offer", data);
   });
   socket.on("answer", (data) => {
-    socket.broadcast.emit("answer", data);
+    socket.to(roomId).emit("answer", data);
   });
   socket.on("candidate", (data) => {
-    socket.broadcast.emit("candidate", data);
+    socket.to(roomId).emit("candidate", data);
   });
 });
-
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
