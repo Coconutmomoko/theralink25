@@ -75,7 +75,7 @@ pipeline {
                                         echo "${SUDO_PASS}" | sudo -S docker build -t ${IMG_NAME} . || exit 1
 
                                         echo "Running new container..."
-                                        echo "${SUDO_PASS}" | sudo -S docker run --name ${CONTAINER_NAME} -d -p 80:5000 --restart unless-stopped ${IMG_NAME} || exit 1
+                                        echo "${SUDO_PASS}" | sudo -S docker run --name ${CONTAINER_NAME} -d -p 5000:5000 --restart unless-stopped ${IMG_NAME} || exit 1
 
                                         echo "Deployment complete!"
 
