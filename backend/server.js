@@ -37,17 +37,27 @@ app.get("/:room", (req, res) => {
 io.on("connection", (socket) => {
   socket.on("join-room", (roomId) => {
     socket.join(roomId);
+
     socket.on("offer", (data) => {
       socket.to(roomId).emit("offer", data);
     });
+
     socket.on("answer", (data) => {
       socket.to(roomId).emit("answer", data);
     });
+
     socket.on("candidate", (data) => {
       socket.to(roomId).emit("candidate", data);
     });
+
     socket.on("endCall", () => {
       socket.to(roomId).emit("endCall");
+    });
+
+    // Add the chat message handler:
+    socket.on("message", (data) => {
+      // Broadcast the message to all other sockets in the room.
+      socket.to(roomId).emit("message", data);
     });
   });
 });
