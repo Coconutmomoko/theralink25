@@ -2,15 +2,11 @@ const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 const startCallButton = document.getElementById("startCall");
 const endCallButton = document.getElementById("endCall");
-
-// Create toggle buttons
-const toggleVideoButton = document.createElement("button");
-toggleVideoButton.textContent = "Toggle Video";
-document.body.appendChild(toggleVideoButton);
-
-const toggleAudioButton = document.createElement("button");
-toggleAudioButton.textContent = "Toggle Audio";
-document.body.appendChild(toggleAudioButton);
+const sendMessageButton = document.getElementById("send-message");
+const toggleVideoButton = document.getElementById("toggle-video");
+const toggleAudioButton = document.getElementById("toggle-audio");
+const messageInput = document.getElementById("message");
+const messagesList = document.getElementById("messages");
 
 const socket = io();
 let localStream;
@@ -56,10 +52,7 @@ async function startMedia() {
 function updateToggleButtons() {
   toggleVideoButton.disabled = !hasVideoDevice;
   toggleAudioButton.disabled = !hasAudioDevice;
-
-  toggleVideoButton.textContent = isVideoEnabled
-    ? "Turn Video Off"
-    : "Turn Video On";
+  toggleVideoButton.textContent = isVideoEnabled ? "Turn video Off" : "Turn video On";
   toggleAudioButton.textContent = isAudioEnabled ? "Mute" : "Unmute";
 }
 
@@ -121,6 +114,40 @@ toggleAudioButton.addEventListener("click", () => {
     .forEach((track) => (track.enabled = isAudioEnabled));
   updateToggleButtons();
 });
+
+// Function to scroll to the bottom of the messages list
+function scrollToBottom() {
+  messagesList.scrollTop = messagesList.scrollHeight;
+}
+
+// Update the send message event listener:
+sendMessageButton.addEventListener("click", () => {
+  const message = messageInput.value.trim();
+  if (message) {
+    // Emit the message along with any metadata (like sender id) if needed.
+    socket.emit("message", { text: message });
+
+    // Optionally, display your own message immediately:
+    addMessageToChat(`You: ${message}`, true);
+    messageInput.value = "";
+    scrollToBottom(); // Autoscroll to the bottom
+  }
+});
+
+// Listen for incoming messages:
+socket.on("message", (data) => {
+  addMessageToChat(`Peer: ${data.text}`);
+  scrollToBottom(); // Autoscroll to the bottom
+});
+
+// Helper function to append a new message to the chat:
+function addMessageToChat(msg, isOwnMessage = false) {
+  const li = document.createElement("li");
+  li.textContent = msg;
+  li.style.whiteSpace = "pre-wrap"; // Preserve multiline formatting
+  li.style.backgroundColor = isOwnMessage ? "#d1ffd1" : "#d1e0ff";
+  messagesList.appendChild(li);
+}
 
 // Event Listeners
 startCallButton.addEventListener("click", startCall);

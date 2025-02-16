@@ -15,6 +15,15 @@
   <br />
   <button id="startCall">Start Call</button>
   <button id="endCall">End Call</button>
+  <button id="toggle-audio">Toggle Audio</button>
+  <button id="toggle-video">Toggle Video</button>
+  <div id="chat">
+    <ul id="messages"></ul>
+    <div id="message-container">
+      <textarea id="message" placeholder="Type your message here..."></textarea>
+      <button id="send-message">Send</button>
+    </div>
+  </div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="main.js"></script>
 </body>

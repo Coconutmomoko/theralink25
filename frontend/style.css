@@ -23,3 +23,39 @@ button {
   margin-top: 20px;
   cursor: pointer;
 }
+
+#chat {
+  width: 20%;
+  max-height: 20%;
+  padding: 10px;
+  border: 2px solid #333;
+  background-color: #fff;
+  text-align: left;
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+#messages {
+  flex: 1;
+  overflow-y: auto; /* Enable vertical scrolling */
+  margin-bottom: 10px;
+}
+
+#message-container {
+  display: flex;
+  align-items: center;
+}
+
+#message {
+  height: 60px;
+  resize: none; /* Prevent resizing */
+  flex: 1;
+}
+
+#send-message {
+  margin-left: 10px;
+  align-self: flex-end;
+}
