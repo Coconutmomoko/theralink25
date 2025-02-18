@@ -54,7 +54,7 @@ io.on("connection", (socket) => {
       socket.to(roomId).emit("endCall");
     });
 
-    // Add the chat message handler:
+    // Chat message handler:
     socket.on("message", (data) => {
       // Broadcast the message to all other sockets in the room.
       socket.to(roomId).emit("message", data);
