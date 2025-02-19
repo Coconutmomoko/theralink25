@@ -34,9 +34,27 @@ app.get("/:room", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
+// Object to keep track of users in each room
+const rooms = {};
+
 io.on("connection", (socket) => {
   socket.on("join-room", (roomId) => {
+    // Check if the room exists, if not create it
+    if (!rooms[roomId]) {
+      rooms[roomId] = [];
+    }
+
+    // Check if the room is full
+    if (rooms[roomId].length >= 2) {
+      socket.emit("room-full");
+      return;
+    }
+
+    // Add the user to the room
+    rooms[roomId].push(socket.id);
+
     socket.join(roomId);
+    console.log("User joined room: " + roomId + " with userId: " + socket.id);
 
     socket.on("offer", (data) => {
       socket.to(roomId).emit("offer", data);
@@ -59,8 +77,17 @@ io.on("connection", (socket) => {
       // Broadcast the message to all other sockets in the room.
       socket.to(roomId).emit("message", data);
     });
+
+    // Handle user disconnection
+    socket.on("disconnect", () => {
+      rooms[roomId] = rooms[roomId].filter((id) => id !== socket.id);
+      if (rooms[roomId].length === 0) {
+        delete rooms[roomId];
+      }
+    });
   });
 });
+
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
