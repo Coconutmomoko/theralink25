@@ -52,7 +52,9 @@ async function startMedia() {
 function updateToggleButtons() {
   toggleVideoButton.disabled = !hasVideoDevice;
   toggleAudioButton.disabled = !hasAudioDevice;
-  toggleVideoButton.textContent = isVideoEnabled ? "Turn video Off" : "Turn video On";
+  toggleVideoButton.textContent = isVideoEnabled
+    ? "Turn video Off"
+    : "Turn video On";
   toggleAudioButton.textContent = isAudioEnabled ? "Mute" : "Unmute";
 }
 
@@ -190,3 +192,7 @@ socket.on("candidate", async (candidate) => {
 // Join the room
 const roomId = window.location.pathname.split("/")[1];
 socket.emit("join-room", roomId);
+
+socket.on("room-full", () => {
+  window.location.href = "/room-full"; // Redirect to the home page or any other URL
+});
