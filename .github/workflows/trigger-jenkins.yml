@@ -1,9 +1,9 @@
-name: Trigger Jenkins Job on Changes
+name: Trigger Jenkins Job on Main Changes
 
 on:
   push:
     branches:
-      - trigger_jenkins
+      - main
 
 jobs:
   trigger-jenkins:
