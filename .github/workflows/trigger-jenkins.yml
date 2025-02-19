@@ -1,0 +1,22 @@
+name: Trigger Jenkins Job on Main Changes
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trigger-jenkins:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Jenkins Job
+        env:
+          JENKINS_URL: "http://193.166.25.207:9080"
+          JOB_NAME: "movedigi"
+          JENKINS_USER: "movedigi"
+          JENKINS_API_TOKEN: "11ec6b7bc642038c4955d45ac937fbeac2"
+        run: |
+          CRUMB=$(curl -s -u "$JENKINS_USER:$JENKINS_API_TOKEN" "$JENKINS_URL/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)")
+          curl -X POST "$JENKINS_URL/job/$JOB_NAME/build" \
+            --user "$JENKINS_USER:$JENKINS_API_TOKEN" \
+            --header "$CRUMB"
