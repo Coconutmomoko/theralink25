@@ -1,4 +1,4 @@
-name: Trigger Jenkins Job on Main Branch Changes
+name: Trigger Jenkins Job on Changes
 
 on:
   push:
