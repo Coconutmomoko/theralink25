@@ -97,6 +97,16 @@ function endCall() {
   socket.emit("endCall");
 }
 
+// Handle end call from the other user
+socket.on("endCall", () => {
+  if (peerConnection) {
+    peerConnection.close();
+    peerConnection = null;
+  }
+
+  remoteVideo.srcObject = null;
+});
+
 // Toggle Video On/Off
 toggleVideoButton.addEventListener("click", () => {
   if (!hasVideoDevice) return;
@@ -195,4 +205,13 @@ socket.emit("join-room", roomId);
 
 socket.on("room-full", () => {
   window.location.href = "/room-full"; // Redirect to the home page or any other URL
+});
+
+socket.on("user-disconnected", () => {
+  if (peerConnection) {
+    peerConnection.close();
+    peerConnection = null;
+  }
+
+  remoteVideo.srcObject = null;
 });
