@@ -184,14 +184,36 @@ startRecordingButton.addEventListener("click", async () => {
       }
     };
 
-    recorder.onstop = () => {
+    recorder.onstop = async () => {
       const blob = new Blob(chunks, { type: "video/webm" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "recording.webm";
-      a.click();
-      URL.revokeObjectURL(url);
+
+      // Use File System Access API if available
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await showSaveFilePicker({
+            suggestedName: "recording.webm",
+            types: [
+              {
+                description: "WebM Video",
+                accept: { "video/webm": [".webm"] },
+              },
+            ],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } catch (error) {
+          console.error("Error saving file:", error);
+        }
+      } else {
+        // Fallback to creating a download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "recording.webm";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
     };
 
     recorder.start();
