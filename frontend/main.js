@@ -7,6 +7,7 @@ const toggleVideoButton = document.getElementById("toggle-video");
 const toggleAudioButton = document.getElementById("toggle-audio");
 const messageInput = document.getElementById("message");
 const messagesList = document.getElementById("messages");
+const startRecordingButton = document.getElementById("start-recording");
 
 const socket = io();
 let localStream;
@@ -150,6 +151,44 @@ function addMessageToChat(msg, isOwnMessage = false) {
   li.style.backgroundColor = isOwnMessage ? "#d1ffd1" : "#d1e0ff";
   messagesList.appendChild(li);
 }
+
+// Variable to keep track of the recorder and recording state
+let recorder;
+let isRecording = false;
+
+// Start/Stop recording
+startRecordingButton.addEventListener("click", async () => {
+  if (isRecording) {
+    // Stop recording
+    recorder.stop();
+    isRecording = false;
+    startRecordingButton.textContent = "Start recording";
+  } else {
+    // Start recording
+    recorder = new MediaRecorder(localStream);
+    const chunks = [];
+
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        chunks.push(event.data);
+      }
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: "video/webm" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "recording.webm";
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    recorder.start();
+    isRecording = true;
+    startRecordingButton.textContent = "Stop recording";
+  }
+});
 
 // Event Listeners
 startCallButton.addEventListener("click", startCall);
