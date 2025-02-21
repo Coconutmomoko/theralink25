@@ -1,32 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Video Call App</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-
-<body>
-  <h1>Video Call App</h1>
-  <video id="localVideo" autoplay muted></video>
-  <video id="remoteVideo" autoplay></video>
-  <br />
-  <button id="startCall">Start Call</button>
-  <button id="endCall">End Call</button>
-  <button id="toggle-audio">Toggle Audio</button>
-  <button id="toggle-video">Toggle Video</button>
-  <button id="start-recording">Start recording</button>
-  <div id="chat">
-    <ul id="messages"></ul>
-    <div id="message-container">
-      <textarea id="message" placeholder="Type your message here..."></textarea>
-      <button id="send-message">Send</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Call App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Video Call App</h1>
+    <button id="startCall">Start Call</button>
+    <button id="endCall">End Call</button>
+    <button id="toggle-audio">Toggle Audio</button>
+    <button id="toggle-video">Toggle Video</button>
+    <button id="start-recording">Start recording</button>
+    <div id="video-grid">
+      <video id="localVideo" autoplay muted></video>
+      <video id="remoteVideo" autoplay></video>
     </div>
-  </div>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="main.js"></script>
-</body>
-
+    <div id="chat">
+      <ul id="messages"></ul>
+      <div id="message-container">
+        <textarea
+          id="message"
+          placeholder="Type your message here..."
+        >
+        </textarea>
+        <button id="send-message">Send</button>
+      </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="main.js"></script>
+  </body>
 </html>

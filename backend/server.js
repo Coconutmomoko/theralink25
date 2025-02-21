@@ -80,6 +80,7 @@ io.on("connection", (socket) => {
 
     // Handle user disconnection
     socket.on("disconnect", () => {
+      socket.to(roomId).emit("user-disconnected");
       rooms[roomId] = rooms[roomId].filter((id) => id !== socket.id);
       if (rooms[roomId].length === 0) {
         delete rooms[roomId];
