@@ -6,26 +6,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Video Call App</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- Add Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 
 <body>
   <h1>Video Call App</h1>
-  <button id="startCall">Start Call</button>
-  <button id="endCall">End Call</button>
-  <button id="toggle-audio">Toggle Audio</button>
-  <button id="toggle-video">Toggle Video</button>
-  <button id="start-recording">Start recording</button>
+  <div id="controls">
+    <button id="startCall"><i class="fa fa-phone" aria-hidden="true"></i> Start Call</button>
+    <button id="endCall"><i class="fas fa-phone-slash"></i> End Call</button>
+    <button id="toggle-audio"><i class="fa fa-retweet" aria-hidden="true"></i> Toggle Audio</button>
+    <button id="toggle-video"><i class="fa fa-retweet" aria-hidden="true"></i> Toggle Video</button>
+    <button id="start-recording"><i class="fa fa-video-camera" aria-hidden="true"></i> Start recording</button>
+  </div>
   <div id="video-grid">
     <video id="localVideo" autoplay muted></video>
     <video id="remoteVideo" autoplay></video>
   </div>
   <div id="chat">
-    <ul id="messages"></ul>
+    <h2>Chat</h2>
     <div id="message-container">
       <textarea id="message" placeholder="Type your message here..."></textarea>
-      <button id="send-message">Send</button>
+      <button id="close-chat">↓</button> <!-- Close button -->
     </div>
+    <ul id="messages"></ul>
+    <button id="send-message">Send</button>
   </div>
+  <!-- Minimized chat icon -->
+  <div id="chat-icon"></div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="main.js"></script>
 </body>
