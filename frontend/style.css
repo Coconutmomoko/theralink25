@@ -1,71 +1,212 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Arial', sans-serif;
   text-align: center;
-  background-color: #f0f0f0;
+  background: #f8f9fa;
   margin: 0;
   padding: 20px;
 }
 
 h1 {
   color: #333;
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+#controls {
+  margin-bottom: 20px;
 }
 
 video {
   width: 45%;
-  margin: 10px;
-  border: 2px solid #333;
-  background-color: #000;
+  max-width: 500px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  background: black;
+}
+
+#video-grid {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 20px;
 }
 
 button {
-  padding: 10px 20px;
+  padding: 12px 18px;
   font-size: 16px;
-  margin-top: 20px;
+  border: none;
+  border-radius: 5px;
+  margin: 5px;
   cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+#startCall {
+  background: #28a745;
+  color: white;
+}
+
+#endCall {
+  background: #dc3545;
+  color: white;
+}
+
+#toggle-audio, #toggle-video {
+  background: #007bff;
+  color: white;
+}
+
+#start-recording {
+  background: #ffc107;
+  color: white;
+}
+
+button:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
 }
 
 #chat {
-  width: 20%;
-  max-height: 20%;
-  padding: 10px;
-  border: 2px solid #333;
-  background-color: #fff;
-  text-align: left;
+  width: 300px;
+  max-height: 400px;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: white;
   position: fixed;
-  bottom: 30px;
-  right: 30px;
+  bottom: 20px;
+  right: 20px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: none; /* Initially hide the chat box */
 }
 
+h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+#chat-icon {
+  display: block;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  cursor: pointer;
+  z-index: 1001; /* Ensure it's above everything else */
+  width: 50px;
+  height: 50px;
+  background-color: #007bff; /* Blue background */
+  border-radius: 50%; /* Circle shape */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+#chat-icon:before {
+  content: "💬"; /* Chat bubble emoji */
+  font-size: 28px;
+  color: white;
+}
+
+#chat-icon:hover {
+  background-color: #0056b3; /* Darker blue when hovering */
+}
+
+#chat-icon img {
+  display: none; /* Hide the img tag */
+}
+
+
 @media (max-width: 768px) {
+  #video-grid {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  video {
+    width: 90%;
+  }
+
   #chat {
     width: 90%;
-    max-height: 40%;
+    right: 5%;
     bottom: 10px;
-    right: 10px;
+    max-height: 350px;
+    padding: 10px; /* Reduced padding on smaller screens */
+  }
+
+  #messages {
+    margin-bottom: 5px; /* Reduced margin for smaller screens */
+  }
+
+  #chat-icon img {
+    width: 35px; /* Smaller icon for mobile */
+    height: 35px;
   }
 
 }
 
+@media (max-width: 480px) {
+  #chat {
+    width: 85%; /* Even more compact on extra small screens */
+    max-height: 280px; /* Reduce height further for smaller screens */
+  }
+}
+
 #messages {
   flex: 1;
-  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
   margin-bottom: 10px;
 }
 
+
 #message-container {
-  display: flex;
-  align-items: center;
+  position: flex;
+  align-items: center; /* Vertically center the items */
 }
 
 #message {
-  height: 60px;
-  resize: none; /* Prevent resizing */
+  height: 80px;
+  width: 90%;
   flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  resize: none; /* Prevent resizing */
 }
 
 #send-message {
+  background: #007bff;
+  color: white;
   margin-left: 10px;
-  align-self: flex-end;
+  margin-top: -10px;
+  padding: 5px 10px;
 }
+
+#close-chat {
+  background: #0951d6d2;
+  color: white;
+  border: none;
+  padding: 1px 2px;
+  font-size: 16px;
+  border-radius: 2%; /* Round shape */
+  cursor: pointer;
+  margin-left: 30px;
+  position: absolute; /* Position the button at the right of the text area */
+  right: 0px; /* Align to the right of the text area */
+  top: 15px; /* Center the button vertically */
+  transform: translateY(-50%);
+}
+
+#close-chat:hover {
+  background-color: #007bff;/* Darker red when hovering */
+}
+

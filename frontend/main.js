@@ -8,6 +8,10 @@ const toggleAudioButton = document.getElementById("toggle-audio");
 const messageInput = document.getElementById("message");
 const messagesList = document.getElementById("messages");
 const startRecordingButton = document.getElementById("start-recording");
+// Get the chat icon and chat box elements
+const chatIcon = document.getElementById('chat-icon');
+const chatBox = document.getElementById('chat');
+const closeChatButton = document.getElementById('close-chat');
 
 const socket = io();
 let localStream;
@@ -275,4 +279,19 @@ socket.on("user-disconnected", () => {
   }
 
   remoteVideo.srcObject = null;
+});
+
+// Add event listener to toggle chat visibility
+chatIcon.addEventListener('click', () => {
+  // Toggle the display property of the chat box
+    chatBox.style.display = 'flex'; // Show the chat box
+    chatIcon.style.display = 'none'; // Hide the chat icon
+
+});
+
+// Add event listener to close the chat box
+closeChatButton.addEventListener('click', () => {
+  // Hide the chat box and show the chat icon
+  chatBox.style.display = 'none'; // Hide the chat box
+  chatIcon.style.display = 'block'; // Show the chat icon
 });
