@@ -9,9 +9,9 @@ const messageInput = document.getElementById("message");
 const messagesList = document.getElementById("messages");
 const startRecordingButton = document.getElementById("start-recording");
 // Get the chat icon and chat box elements
-const chatIcon = document.getElementById('chat-icon');
-const chatBox = document.getElementById('chat');
-const closeChatButton = document.getElementById('close-chat');
+const chatIcon = document.getElementById("chat-icon");
+const chatBox = document.getElementById("chat");
+const closeChatButton = document.getElementById("close-chat");
 
 const socket = io();
 let localStream;
@@ -137,19 +137,25 @@ function scrollToBottom() {
   messagesList.scrollTop = messagesList.scrollHeight;
 }
 
-// Update the send message event listener:
-sendMessageButton.addEventListener("click", () => {
-  const message = messageInput.value.trim();
-  if (message) {
-    // Emit the message along with any metadata (like sender id) if needed.
-    socket.emit("message", { text: message });
-
-    // Optionally, display your own message immediately:
-    addMessageToChat(`You: ${message}`, true);
-    messageInput.value = "";
-    scrollToBottom(); // Autoscroll to the bottom
+messageInput.addEventListener("keydown", function (event) {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault(); // Prevent new line in input
+    sendMessage(); // Call the sendMessage function
   }
 });
+
+function sendMessage() {
+  const message = messageInput.value.trim();
+  if (message) {
+    // Emit the message
+    socket.emit("message", { text: message });
+
+    // Display the message immediately
+    addMessageToChat(`You: ${message}`, true);
+    messageInput.value = "";
+    scrollToBottom();
+  }
+}
 
 // Listen for incoming messages:
 socket.on("message", (data) => {
@@ -282,16 +288,15 @@ socket.on("user-disconnected", () => {
 });
 
 // Add event listener to toggle chat visibility
-chatIcon.addEventListener('click', () => {
+chatIcon.addEventListener("click", () => {
   // Toggle the display property of the chat box
-    chatBox.style.display = 'flex'; // Show the chat box
-    chatIcon.style.display = 'none'; // Hide the chat icon
-
+  chatBox.style.display = "flex"; // Show the chat box
+  chatIcon.style.display = "none"; // Hide the chat icon
 });
 
 // Add event listener to close the chat box
-closeChatButton.addEventListener('click', () => {
+closeChatButton.addEventListener("click", () => {
   // Hide the chat box and show the chat icon
-  chatBox.style.display = 'none'; // Hide the chat box
-  chatIcon.style.display = 'block'; // Show the chat icon
+  chatBox.style.display = "none"; // Hide the chat box
+  chatIcon.style.display = "block"; // Show the chat icon
 });
