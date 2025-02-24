@@ -73,7 +73,6 @@ button:hover {
 
 #chat {
   width: 300px;
-  max-height: 400px;
   padding: 15px;
   border-radius: 8px;
   border: 1px solid #ccc;
@@ -84,7 +83,7 @@ button:hover {
   display: flex;
   flex-direction: column;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  /* z-index: 1000; */
   display: none; /* Initially hide the chat box */
 }
 
@@ -192,26 +191,22 @@ h2 {
 #send-message {
   background: #007bff;
   color: white;
-  margin-left: 10px;
-  margin-top: -10px;
+  margin-top: 5px;
   padding: 5px 10px;
 }
 
 #close-chat {
-  background: #0951d6d2;
+  background: #dc3545;
+  width: 30px;
   color: white;
   border: none;
-  padding: 1px 2px;
+  padding: 2px 3px;
   font-size: 16px;
-  border-radius: 2%; /* Round shape */
+  border-radius: 10%; /* Round shape */
   cursor: pointer;
   margin-left: 30px;
   position: absolute; /* Position the button at the right of the text area */
-  right: 0px; /* Align to the right of the text area */
+  right: 5px; /* Align to the right of the text area */
   top: 15px; /* Center the button vertically */
   transform: translateY(-50%);
-}
-
-#close-chat:hover {
-  background-color: #007bff; /* Darker red when hovering */
 }
