@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 let server;
 
-if (true) {
+if (process.env.USE_HTTPS) {
   const options = {
     key: fs.readFileSync("certificates/cert.key"),
     cert: fs.readFileSync("certificates/cert.crt"),
