@@ -12,9 +12,12 @@ const startRecordingButton = document.getElementById("start-recording");
 const chatIcon = document.getElementById("chat-icon");
 const chatBox = document.getElementById("chat");
 const closeChatButton = document.getElementById("close-chat");
+const recordingCanvas = document.getElementById("recordingCanvas");
+const recordingContext = recordingCanvas.getContext("2d");
 
 const socket = io();
 let localStream;
+let remoteStream = new MediaStream(); // Initialize remoteStream
 let peerConnection;
 let isVideoEnabled = true;
 let isAudioEnabled = true;
@@ -79,7 +82,8 @@ async function startCall() {
   };
 
   peerConnection.ontrack = (event) => {
-    remoteVideo.srcObject = event.streams[0];
+    remoteStream.addTrack(event.track); // Add track to remoteStream
+    remoteVideo.srcObject = remoteStream;
   };
 
   const offer = await peerConnection.createOffer();
@@ -176,6 +180,27 @@ function addMessageToChat(msg, isOwnMessage = false) {
 let recorder;
 let isRecording = false;
 
+// Function to draw video streams onto the canvas
+function drawVideosToCanvas() {
+  if (!isRecording) return;
+
+  // Set canvas dimensions to match the video dimensions
+  recordingCanvas.width = localVideo.videoWidth + remoteVideo.videoWidth;
+  recordingCanvas.height = Math.max(localVideo.videoHeight, remoteVideo.videoHeight);
+
+  // Clear the canvas
+  recordingContext.clearRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+
+  // Draw local video
+  recordingContext.drawImage(localVideo, 0, 0, localVideo.videoWidth, localVideo.videoHeight);
+
+  // Draw remote video
+  recordingContext.drawImage(remoteVideo, localVideo.videoWidth, 0, remoteVideo.videoWidth, remoteVideo.videoHeight);
+
+  // Continue drawing at the next animation frame
+  requestAnimationFrame(drawVideosToCanvas);
+}
+
 // Start/Stop recording
 startRecordingButton.addEventListener("click", async () => {
   if (isRecording) {
@@ -184,34 +209,34 @@ startRecordingButton.addEventListener("click", async () => {
     isRecording = false;
     startRecordingButton.textContent = "Start recording";
   } else {
-    // Ensure remoteStream is always initialized
-    if (typeof remoteStream === "undefined") {
-      console.warn("remoteStream is undefined! Initializing as empty MediaStream.");
-      remoteStream = new MediaStream(); // Prevents errors if it's undefined
+    // Start drawing videos to canvas
+    isRecording = true;
+    drawVideosToCanvas();
+
+    // Create MediaRecorder from the canvas stream
+    const canvasStream = recordingCanvas.captureStream();
+
+    // Combine audio tracks from local and remote streams
+    const audioContext = new AudioContext();
+    const destination = audioContext.createMediaStreamDestination();
+
+    if (localStream.getAudioTracks().length > 0) {
+      const localAudioSource = audioContext.createMediaStreamSource(localStream);
+      localAudioSource.connect(destination);
     }
 
-    // Safely collect both local and remote tracks
+    if (remoteStream.getAudioTracks().length > 0) {
+      const remoteAudioSource = audioContext.createMediaStreamSource(remoteStream);
+      remoteAudioSource.connect(destination);
+    }
+
+    // Combine canvas stream and audio tracks
     const combinedStream = new MediaStream([
-      ...localStream.getTracks(),
-      ...remoteStream.getTracks(),
+      ...canvasStream.getVideoTracks(),
+      ...destination.stream.getAudioTracks(),
     ]);
 
-    if (combinedStream.getTracks().length === 0) {
-      console.error("Error: No tracks available for recording!");
-      alert("No available tracks to record.");
-      return;
-    }
-
-    console.log("Recording started with tracks:", combinedStream.getTracks());
-
-    // Try to create MediaRecorder safely
-    try {
-      recorder = new MediaRecorder(combinedStream);
-    } catch (error) {
-      console.error("Error initializing MediaRecorder:", error);
-      alert("Your browser does not support recording.");
-      return;
-    }
+    recorder = new MediaRecorder(combinedStream);
 
     const chunks = [];
 
@@ -255,7 +280,6 @@ startRecordingButton.addEventListener("click", async () => {
     };
 
     recorder.start();
-    isRecording = true;
     startRecordingButton.textContent = "Stop recording";
   }
 });
@@ -280,7 +304,8 @@ socket.on("offer", async (offer) => {
     };
 
     peerConnection.ontrack = (event) => {
-      remoteVideo.srcObject = event.streams[0];
+      remoteStream.addTrack(event.track); // Add track to remoteStream
+      remoteVideo.srcObject = remoteStream;
     };
   }
 
