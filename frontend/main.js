@@ -184,8 +184,35 @@ startRecordingButton.addEventListener("click", async () => {
     isRecording = false;
     startRecordingButton.textContent = "Start recording";
   } else {
-    // Start recording
-    recorder = new MediaRecorder(localStream);
+    // Ensure remoteStream is always initialized
+    if (typeof remoteStream === "undefined") {
+      console.warn("remoteStream is undefined! Initializing as empty MediaStream.");
+      remoteStream = new MediaStream(); // Prevents errors if it's undefined
+    }
+
+    // Safely collect both local and remote tracks
+    const combinedStream = new MediaStream([
+      ...localStream.getTracks(),
+      ...remoteStream.getTracks(),
+    ]);
+
+    if (combinedStream.getTracks().length === 0) {
+      console.error("Error: No tracks available for recording!");
+      alert("No available tracks to record.");
+      return;
+    }
+
+    console.log("Recording started with tracks:", combinedStream.getTracks());
+
+    // Try to create MediaRecorder safely
+    try {
+      recorder = new MediaRecorder(combinedStream);
+    } catch (error) {
+      console.error("Error initializing MediaRecorder:", error);
+      alert("Your browser does not support recording.");
+      return;
+    }
+
     const chunks = [];
 
     recorder.ondataavailable = (event) => {
@@ -195,9 +222,10 @@ startRecordingButton.addEventListener("click", async () => {
     };
 
     recorder.onstop = async () => {
+      console.log("Recording stopped.");
       const blob = new Blob(chunks, { type: "video/webm" });
 
-      // Use File System Access API if available
+      // Save the file using File System API if available
       if (window.showSaveFilePicker) {
         try {
           const handle = await showSaveFilePicker({
@@ -216,7 +244,7 @@ startRecordingButton.addEventListener("click", async () => {
           console.error("Error saving file:", error);
         }
       } else {
-        // Fallback to creating a download link
+        // Fallback to a download link
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
