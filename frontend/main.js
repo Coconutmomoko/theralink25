@@ -313,7 +313,7 @@ socket.on("offer", async (offer) => {
     peerConnection.ontrack = (event) => {
       remoteStream.addTrack(event.track); // Add track to remoteStream
       remoteVideo.srcObject = remoteStream;
-      remoteVideo.style.transform = "scaleX(-1)";
+      remoteVideo.style.transform = "scaleX(1)";
     };
   }
 
@@ -392,14 +392,16 @@ function stopScreenShare() {
   const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
   sender.replaceTrack(localStream.getVideoTracks()[0]);
 
-  localVideo.srcObject = localStream;
-  localVideo.style.transform = ""; // Remove flip when stopping screen share
+
 
   isSharingScreen = false;
   startShareBtn.disabled = false;
   stopShareBtn.disabled = true;
 
   socket.emit("stop-share-screen");
+
+  localVideo.style.transform = "scaleX(1)"; // Remove flip when stopping screen share
+  localVideo.srcObject = localStream;
 }
 
 // Event listeners
@@ -411,4 +413,9 @@ stopShareBtn.addEventListener("click", stopScreenShare);
 // Handle stopping screen share
 socket.on("stop-share-screen", () => {
   remoteVideo.srcObject = remoteStream;
+  remoteVideo.style.transform = "scaleX(1)";
+});
+
+socket.on("share-screen", () => {
+  remoteVideo.style.transform = "scaleX(1)"; // Show it correctly to you
 });
