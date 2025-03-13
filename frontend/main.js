@@ -90,6 +90,7 @@ async function startCall() {
   peerConnection.ontrack = (event) => {
     remoteStream.addTrack(event.track); // Add track to remoteStream
     remoteVideo.srcObject = remoteStream;
+    remoteVideo.style.transform = "";  // screen sharing
   };
 
   const offer = await peerConnection.createOffer();
