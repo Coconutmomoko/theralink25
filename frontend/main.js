@@ -369,6 +369,9 @@ async function startScreenShare() {
       const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
       sender.replaceTrack(screenStream.getVideoTracks()[0]);
 
+      localVideo.srcObject = screenStream;
+      localVideo.style.transform = "scaleX(-1)";
+
       isSharingScreen = true;
       startShareBtn.disabled = true;
       stopShareBtn.disabled = false;
@@ -386,6 +389,9 @@ function stopScreenShare() {
 
   const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
   sender.replaceTrack(localStream.getVideoTracks()[0]);
+
+  localVideo.srcObject = localStream;
+  localVideo.style.transform = ""; // Remove flip when stopping screen share
 
   isSharingScreen = false;
   startShareBtn.disabled = false;
