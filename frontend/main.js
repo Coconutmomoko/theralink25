@@ -419,3 +419,33 @@ socket.on("stop-share-screen", () => {
 socket.on("share-screen", () => {
   remoteVideo.style.transform = "scaleX(1)"; // Show it correctly to you
 });
+
+
+//full screen
+function toggleFullscreen(videoElement) {
+    if (!document.fullscreenElement) {
+        if (videoElement.requestFullscreen) {
+            videoElement.requestFullscreen();
+        } else if (videoElement.mozRequestFullScreen) { // Firefox
+            videoElement.mozRequestFullScreen();
+        } else if (videoElement.webkitRequestFullscreen) { // Chrome, Safari, Opera
+            videoElement.webkitRequestFullscreen();
+        } else if (videoElement.msRequestFullscreen) { // IE/Edge
+            videoElement.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+            document.msExitFullscreen();
+        }
+    }
+}
+
+// Attach double-click event to both videos
+localVideo.addEventListener('dblclick', () => toggleFullscreen(localVideo));
+remoteVideo.addEventListener('dblclick', () => toggleFullscreen(remoteVideo));
