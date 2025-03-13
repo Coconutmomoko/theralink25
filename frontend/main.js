@@ -28,6 +28,7 @@ let hasVideoDevice = false;
 let hasAudioDevice = false;
 //Screen sharing
 let screenStream;
+let isSharingScreen = false;
 
 const servers = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
