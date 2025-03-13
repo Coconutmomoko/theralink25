@@ -313,7 +313,7 @@ socket.on("offer", async (offer) => {
     peerConnection.ontrack = (event) => {
       remoteStream.addTrack(event.track); // Add track to remoteStream
       remoteVideo.srcObject = remoteStream;
-      remoteVideo.style.transform = "scaleX(1)";
+      remoteVideo.style.transform = "scaleX(-1)";
     };
   }
 
