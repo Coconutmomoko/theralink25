@@ -78,6 +78,16 @@ io.on("connection", (socket) => {
       socket.to(roomId).emit("message", data);
     });
 
+    // Screen share
+    socket.on("share-screen", (data) => {
+      socket.to(roomId).emit("share-screen", data);
+    });
+
+    socket.on("stop-share-screen", () => {
+      socket.to(roomId).emit("stop-share-screen");
+    });
+
+
     // Handle user disconnection
     socket.on("disconnect", () => {
       socket.to(roomId).emit("user-disconnected");

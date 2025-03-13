@@ -212,3 +212,22 @@ h2 {
   top: 15px; /* Center the button vertically */
   transform: translateY(-50%);
 }
+
+/*Screen sharing*/
+.buttons {
+  margin-top: 20px;
+}
+
+button {
+  padding: 10px;
+  font-size: 16px;
+  margin: 5px;
+  cursor: pointer;
+  background: #b007ff;
+  color: white;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}

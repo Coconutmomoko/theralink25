@@ -14,6 +14,9 @@ const chatBox = document.getElementById("chat");
 const closeChatButton = document.getElementById("close-chat");
 const recordingCanvas = document.getElementById("recordingCanvas");
 const recordingContext = recordingCanvas.getContext("2d");
+//Screen sharing
+const startShareBtn = document.getElementById("startShare");
+const stopShareBtn = document.getElementById("stopShare");
 
 const socket = io();
 let localStream;
@@ -23,6 +26,8 @@ let isVideoEnabled = true;
 let isAudioEnabled = true;
 let hasVideoDevice = false;
 let hasAudioDevice = false;
+//Screen sharing
+let screenStream;
 
 const servers = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -352,4 +357,71 @@ closeChatButton.addEventListener("click", () => {
   // Hide the chat box and show the chat icon
   chatBox.style.display = "none"; // Hide the chat box
   chatIcon.style.display = "block"; // Show the chat icon
+});
+
+// Screen sharing
+// Function to start screen sharing
+startShareBtn.addEventListener("click", async () => {
+  try {
+      screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      localVideo.srcObject = screenStream;
+      startShareBtn.disabled = true;
+      stopShareBtn.disabled = false;
+
+      socket.emit("share-screen", true);
+
+      peerConnection = new RTCPeerConnection(config);
+      screenStream.getTracks().forEach(track => peerConnection.addTrack(track, screenStream));
+
+      peerConnection.onicecandidate = event => {
+          if (event.candidate) {
+              socket.emit("candidate", event.candidate);
+          }
+      };
+
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      socket.emit("offer", offer);
+  } catch (error) {
+      console.error("Error sharing screen:", error);
+  }
+});
+
+// Function to stop screen sharing
+stopShareBtn.addEventListener("click", () => {
+  if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+      localVideo.srcObject = null;
+      startShareBtn.disabled = false;
+      stopShareBtn.disabled = true;
+
+      socket.emit("stop-share-screen");
+  }
+});
+
+// Handle incoming screen sharing
+socket.on("share-screen", () => {
+  console.log("Receiving shared screen...");
+});
+
+socket.on("offer", async (offer) => {
+  peerConnection = new RTCPeerConnection(config);
+  peerConnection.ontrack = event => {
+      remoteVideo.srcObject = event.streams[0];
+  };
+  peerConnection.onicecandidate = event => {
+      if (event.candidate) {
+          socket.emit("candidate", event.candidate);
+      }
+  };
+
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  socket.emit("answer", answer);
+});
+
+
+socket.on("stop-share-screen", () => {
+  remoteVideo.srcObject = null;
 });
