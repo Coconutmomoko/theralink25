@@ -360,68 +360,46 @@ closeChatButton.addEventListener("click", () => {
 });
 
 // Screen sharing
-// Function to start screen sharing
-startShareBtn.addEventListener("click", async () => {
+// ----------------- SCREEN SHARING FIX -----------------
+async function startScreenShare() {
   try {
       screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      localVideo.srcObject = screenStream;
+
+      const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
+      sender.replaceTrack(screenStream.getVideoTracks()[0]);
+
+      isSharingScreen = true;
       startShareBtn.disabled = true;
       stopShareBtn.disabled = false;
 
-      socket.emit("share-screen", true);
-
-      peerConnection = new RTCPeerConnection(config);
-      screenStream.getTracks().forEach(track => peerConnection.addTrack(track, screenStream));
-
-      peerConnection.onicecandidate = event => {
-          if (event.candidate) {
-              socket.emit("candidate", event.candidate);
-          }
-      };
-
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-      socket.emit("offer", offer);
+      socket.emit("share-screen");
   } catch (error) {
       console.error("Error sharing screen:", error);
   }
-});
+}
 
-// Function to stop screen sharing
-stopShareBtn.addEventListener("click", () => {
+function stopScreenShare() {
   if (screenStream) {
       screenStream.getTracks().forEach(track => track.stop());
-      localVideo.srcObject = null;
-      startShareBtn.disabled = false;
-      stopShareBtn.disabled = true;
-
-      socket.emit("stop-share-screen");
   }
-});
 
-// Handle incoming screen sharing
-socket.on("share-screen", () => {
-  console.log("Receiving shared screen...");
-});
+  const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
+  sender.replaceTrack(localStream.getVideoTracks()[0]);
 
-socket.on("offer", async (offer) => {
-  peerConnection = new RTCPeerConnection(config);
-  peerConnection.ontrack = event => {
-      remoteVideo.srcObject = event.streams[0];
-  };
-  peerConnection.onicecandidate = event => {
-      if (event.candidate) {
-          socket.emit("candidate", event.candidate);
-      }
-  };
+  isSharingScreen = false;
+  startShareBtn.disabled = false;
+  stopShareBtn.disabled = true;
 
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-  socket.emit("answer", answer);
-});
+  socket.emit("stop-share-screen");
+}
 
+// Event listeners
+startCallButton.addEventListener("click", startCall);
+endCallButton.addEventListener("click", endCall);
+startShareBtn.addEventListener("click", startScreenShare);
+stopShareBtn.addEventListener("click", stopScreenShare);
 
+// Handle stopping screen share
 socket.on("stop-share-screen", () => {
-  remoteVideo.srcObject = null;
+  remoteVideo.srcObject = remoteStream;
 });
