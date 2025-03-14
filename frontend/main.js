@@ -418,6 +418,8 @@ socket.on("stop-share-screen", () => {
 
 socket.on("share-screen", () => {
   remoteVideo.style.transform = "scaleX(1)"; // Show it correctly to you
+  remoteVideo.style.width = "100%"; // Ensures full width
+  remoteVideo.style.height = "100%";
 });
 
 
