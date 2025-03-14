@@ -366,7 +366,11 @@ closeChatButton.addEventListener("click", () => {
 // ----------------- SCREEN SHARING FIX -----------------
 async function startScreenShare() {
   try {
-      screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      //screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } }
+    });
+
 
       const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
       sender.replaceTrack(screenStream.getVideoTracks()[0]);
