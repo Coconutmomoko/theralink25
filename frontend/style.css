@@ -17,9 +17,10 @@ h1 {
 }
 
 video {
-  width: 45%;
+  width: 100%;
+  height: 100%;
   aspect-ratio: 4/3;
-  object-fit: cover;
+  object-fit: contain;
   transform: scaleX(-1);
   max-width: 500px;
   border-radius: 10px;
@@ -211,4 +212,23 @@ h2 {
   right: 5px; /* Align to the right of the text area */
   top: 15px; /* Center the button vertically */
   transform: translateY(-50%);
+}
+
+/*Screen sharing*/
+.buttons {
+  margin-top: 20px;
+}
+
+button {
+  padding: 10px;
+  font-size: 16px;
+  margin: 5px;
+  cursor: pointer;
+  background: #b007ff;
+  color: white;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }

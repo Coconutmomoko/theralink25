@@ -14,6 +14,9 @@ const chatBox = document.getElementById("chat");
 const closeChatButton = document.getElementById("close-chat");
 const recordingCanvas = document.getElementById("recordingCanvas");
 const recordingContext = recordingCanvas.getContext("2d");
+//Screen sharing
+const startShareBtn = document.getElementById("startShare");
+const stopShareBtn = document.getElementById("stopShare");
 
 const socket = io();
 let localStream;
@@ -23,6 +26,9 @@ let isVideoEnabled = true;
 let isAudioEnabled = true;
 let hasVideoDevice = false;
 let hasAudioDevice = false;
+//Screen sharing
+let screenStream;
+let isSharingScreen = false;
 
 const servers = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -84,6 +90,7 @@ async function startCall() {
   peerConnection.ontrack = (event) => {
     remoteStream.addTrack(event.track); // Add track to remoteStream
     remoteVideo.srcObject = remoteStream;
+    //remoteVideo.style.transform = "";  // screen sharing
   };
 
   const offer = await peerConnection.createOffer();
@@ -306,6 +313,7 @@ socket.on("offer", async (offer) => {
     peerConnection.ontrack = (event) => {
       remoteStream.addTrack(event.track); // Add track to remoteStream
       remoteVideo.srcObject = remoteStream;
+      remoteVideo.style.transform = "scaleX(1)";
     };
   }
 
@@ -353,3 +361,97 @@ closeChatButton.addEventListener("click", () => {
   chatBox.style.display = "none"; // Hide the chat box
   chatIcon.style.display = "block"; // Show the chat icon
 });
+
+// Screen sharing
+// ----------------- SCREEN SHARING FIX -----------------
+async function startScreenShare() {
+  try {
+      //screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } }
+    });
+
+
+      const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
+      sender.replaceTrack(screenStream.getVideoTracks()[0]);
+
+      localVideo.srcObject = screenStream;
+      localVideo.style.transform = "scaleX(1)";
+
+      isSharingScreen = true;
+      startShareBtn.disabled = true;
+      stopShareBtn.disabled = false;
+
+      socket.emit("share-screen");
+  } catch (error) {
+      console.error("Error sharing screen:", error);
+  }
+}
+
+function stopScreenShare() {
+  if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+  }
+
+  const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
+  sender.replaceTrack(localStream.getVideoTracks()[0]);
+
+
+
+  isSharingScreen = false;
+  startShareBtn.disabled = false;
+  stopShareBtn.disabled = true;
+
+  socket.emit("stop-share-screen");
+
+  localVideo.style.transform = "scaleX(1)"; // Remove flip when stopping screen share
+  localVideo.srcObject = localStream;
+}
+
+// Event listeners
+startCallButton.addEventListener("click", startCall);
+endCallButton.addEventListener("click", endCall);
+startShareBtn.addEventListener("click", startScreenShare);
+stopShareBtn.addEventListener("click", stopScreenShare);
+
+// Handle stopping screen share
+socket.on("stop-share-screen", () => {
+  remoteVideo.srcObject = remoteStream;
+  remoteVideo.style.transform = "scaleX(1)";
+});
+
+socket.on("share-screen", () => {
+  remoteVideo.style.transform = "scaleX(1)"; // Show it correctly to you
+  remoteVideo.style.width = "100%"; // Ensures full width
+  remoteVideo.style.height = "100%";
+});
+
+
+//full screen
+function toggleFullscreen(videoElement) {
+    if (!document.fullscreenElement) {
+        if (videoElement.requestFullscreen) {
+            videoElement.requestFullscreen();
+        } else if (videoElement.mozRequestFullScreen) { // Firefox
+            videoElement.mozRequestFullScreen();
+        } else if (videoElement.webkitRequestFullscreen) { // Chrome, Safari, Opera
+            videoElement.webkitRequestFullscreen();
+        } else if (videoElement.msRequestFullscreen) { // IE/Edge
+            videoElement.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+            document.msExitFullscreen();
+        }
+    }
+}
+
+// Attach double-click event to both videos
+localVideo.addEventListener('dblclick', () => toggleFullscreen(localVideo));
+remoteVideo.addEventListener('dblclick', () => toggleFullscreen(remoteVideo));
