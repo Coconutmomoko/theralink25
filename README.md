@@ -4,12 +4,12 @@ The web service allows to make secured 1-to-1 video sessions with session record
 
 ## Running localy
 
-Clone the repository, run
+Clone the repository, go to `backend/` folder and run
 ```
 npm install
 ```
 
-Go to `backend/` folder and run:
+In `backend/` folder run:
 
 for using `http`
 ```
