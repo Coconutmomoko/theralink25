@@ -1,15 +1,70 @@
+:root {
+	--primary-color: #007bff;
+	--background-color: #ffffff;
+	--text-color: #333333;
+	--border-color: #cccccc;
+	--button-hover: #0056b3;
+	--danger-color: #dc3545;
+	--success-color: #28a745;
+	--warning-color: #ffc107;
+	--chat-icon-color: #007bff;
+	--peer-message-bg: #f0f0f0;
+	--peer-message-text: #333;
+}
+
+[data-theme="dark"] {
+	--primary-color: #0d6efd;
+	--background-color: #1a1a1a;
+	--text-color: #e6e6e6;
+	--border-color: #4d4d4d;
+	--button-hover: #0b5ed7;
+	--danger-color: #bb2d3b;
+	--success-color: #218838;
+	--warning-color: #e0a800;
+	--chat-icon-color: #0d6efd;
+	--peer-message-bg: #2d2d2d;
+	--peer-message-text: #e6e6e6;
+}
+
 body {
 	font-family: "Arial", sans-serif;
 	text-align: center;
-	background: #f8f9fa;
+	background: var(--background-color);
+	color: var(--text-color);
 	margin: 0;
 	padding: 20px;
+	transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1 {
-	color: #333;
+	color: var(--text-color);
 	font-size: 28px;
 	margin-bottom: 20px;
+	font-weight: 600;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.theme-toggle {
+	position: absolute;
+	top: 20px;
+	right: auto;
+	left: 20px;
+	padding: 10px;
+	border-radius: 50%;
+	background: var(--primary-color) !important;
+	color: white;
+	border: none;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.theme-toggle i {
+	color: var(--text-color) !important;
+}
+
+.theme-toggle:hover {
+	background: var(--button-hover);
+	transform: scale(1.1);
 }
 
 #controls {
@@ -24,8 +79,13 @@ video {
 	transform: scaleX(-1);
 	max-width: 500px;
 	border-radius: 10px;
-	box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-	background: #33333333;
+	box-shadow: 0px 4px 8px var(--video-shadow, rgba(0, 0, 0, 0.2));
+	background: var(--background-color);
+	border: 2px solid var(--video-border-color, #000000);
+}
+
+[data-theme="dark"] video {
+	--video-border-color: #ffffff;
 }
 
 #video-grid {
@@ -43,33 +103,36 @@ button {
 	border-radius: 5px;
 	margin: 5px;
 	cursor: pointer;
-	transition: background 0.3s ease, transform 0.2s ease;
+	transition: all 0.3s ease;
+	background: var(--primary-color);
+	color: white;
 }
 
 #startCall {
-	background: #28a745;
+	background: var(--success-color);
 	color: white;
 }
 
 #endCall {
-	background: #dc3545;
+	background: var(--danger-color);
 	color: white;
 }
 
 #toggle-audio,
 #toggle-video {
-	background: #007bff;
+	background: var(--primary-color);
 	color: white;
 }
 
 #start-recording {
-	background: #ffc107;
+	background: var(--warning-color);
 	color: white;
 }
 
 button:hover {
 	transform: scale(1.05);
 	opacity: 0.9;
+	background: var(--button-hover);
 }
 
 /* ===== CHAT CONTAINER ===== */
@@ -78,7 +141,8 @@ button:hover {
 	padding: 0;
 	border-radius: 8px;
 	border: 1px solid #ccc;
-	background: rgb(255, 255, 255);
+	background: var(--background-color);
+	border-color: var(--border-color);
 	position: fixed;
 	bottom: 20px;
 	right: 20px;
@@ -128,15 +192,15 @@ button:hover {
 }
 
 #messages li[data-own="true"] {
-	background: #007bff;
+	background: var(--primary-color);
 	color: white;
 	align-self: flex-end;
 	border-bottom-right-radius: 4px;
 }
 
 #messages li[data-own="false"] {
-	background: #f0f0f0;
-	color: #333;
+	background: var(--peer-message-bg, #f0f0f0);
+	color: var(--peer-message-text, #333);
 	align-self: flex-start;
 	border-bottom-left-radius: 4px;
 }
@@ -155,11 +219,11 @@ button:hover {
 #typing-indicator {
 	position: sticky;
 	bottom: 0;
-	background: white;
+	background: var(--background-color);
 	padding: 8px 12px;
 	margin: 0 12px;
 	border-radius: 18px 18px 0 0;
-	box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+	box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
 	z-index: 1;
 	display: none;
 }
@@ -172,7 +236,7 @@ button:hover {
 .typing-dots span {
 	width: 8px;
 	height: 8px;
-	background: #666;
+	background: var(--text-color);
 	border-radius: 50%;
 	display: inline-block;
 	animation: typingAnimation 1.4s infinite ease-in-out;
@@ -238,9 +302,9 @@ h2 {
 	display: flex;
 	align-items: center;
 	padding: 10px;
-	border-top: 1px solid #eee;
+	border-top: 1px solid var(--border-color);
 	flex-shrink: 0;
-	background: white;
+	background: var(--background-color);
 }
 
 #message {
@@ -252,17 +316,20 @@ h2 {
 	border: 1px solid #ccc;
 	border-radius: 5px;
 	resize: none;
+	background: var(--background-color);
+	color: var(--text-color);
+	border-color: var(--border-color);
 }
 
 #send-message {
-	background: blue;
+	background: var(--primary-color);
 	color: white;
 	margin-top: 5px;
 	padding: 5px 10px;
 }
 
 #close-chat {
-	background: #dc3545;
+	background: var(--danger-color);
 	width: 30px;
 	color: white;
 	border: none;
@@ -287,6 +354,7 @@ h2 {
 
 	video {
 		width: 90%;
+		box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 	}
 
 	#chat {
@@ -301,9 +369,19 @@ h2 {
 		margin-bottom: 5px;
 	}
 
+	.theme-toggle {
+		left: 15px;
+		top: 15px;
+		transform: none;
+	}
+
 	#chat-icon {
-		top: 10px;
-		right: 10px;
+		background-color: var(--chat-icon-color);
+		top: 15px;
+		right: 15px;
+		left: auto;
+		width: 45px;
+		height: 45px;
 	}
 
 	#chat-icon img {
@@ -329,7 +407,7 @@ button {
 	font-size: 16px;
 	margin: 5px;
 	cursor: pointer;
-	background: #b007ff;
+	background: var(--primary-color);
 	color: white;
 }
 

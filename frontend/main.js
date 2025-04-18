@@ -18,6 +18,9 @@ const typingIndicator = document.getElementById("typing-indicator");
 //Screen sharing
 const startShareBtn = document.getElementById("startShare");
 const stopShareBtn = document.getElementById("stopShare");
+//UI Dark or Light mode
+const darkModeToggle = document.getElementById("dark-mode-toggle");
+const themeIcons = darkModeToggle.querySelectorAll("i");
 
 const socket = io();
 let localStream;
@@ -31,6 +34,33 @@ let hasAudioDevice = false;
 //Screen sharing
 let screenStream;
 let isSharingScreen = false;
+
+// Theme Handling
+function toggleDarkMode() {
+	const isDark = document.body.getAttribute("data-theme") === "dark";
+	document.body.setAttribute("data-theme", isDark ? "light" : "dark");
+
+	themeIcons?.forEach((icon) => {
+		icon.style.display = icon.classList.contains(isDark ? "fa-sun" : "fa-moon")
+			? "inline-block"
+			: "none";
+	});
+
+	localStorage.setItem("theme", isDark ? "light" : "dark");
+}
+
+// Initialize theme
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme) {
+	document.body.setAttribute("data-theme", savedTheme);
+	themeIcons?.forEach((icon) => {
+		icon.style.display = icon.classList.contains(
+			savedTheme === "dark" ? "fa-moon" : "fa-sun"
+		)
+			? "inline-block"
+			: "none";
+	});
+}
 
 const servers = {
 	iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -492,6 +522,9 @@ startCallButton.addEventListener("click", startCall);
 endCallButton.addEventListener("click", endCall);
 startShareBtn.addEventListener("click", startScreenShare);
 stopShareBtn.addEventListener("click", stopScreenShare);
+if (darkModeToggle) {
+	darkModeToggle.addEventListener("click", toggleDarkMode);
+}
 
 // Handle stopping screen share
 socket.on("stop-share-screen", () => {
