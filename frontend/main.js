@@ -14,6 +14,7 @@ const chatBox = document.getElementById("chat");
 const closeChatButton = document.getElementById("close-chat");
 const recordingCanvas = document.getElementById("recordingCanvas");
 const recordingContext = recordingCanvas.getContext("2d");
+const typingIndicator = document.getElementById("typing-indicator");
 //Screen sharing
 const startShareBtn = document.getElementById("startShare");
 const stopShareBtn = document.getElementById("stopShare");
@@ -22,6 +23,7 @@ const socket = io();
 let localStream;
 let remoteStream = new MediaStream(); // Initialize remoteStream
 let peerConnection;
+let typingTimeout;
 let isVideoEnabled = true;
 let isAudioEnabled = true;
 let hasVideoDevice = false;
@@ -31,156 +33,206 @@ let screenStream;
 let isSharingScreen = false;
 
 const servers = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+	iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
 // Check available devices
 async function checkDevices() {
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  hasVideoDevice = devices.some((device) => device.kind === "videoinput");
-  hasAudioDevice = devices.some((device) => device.kind === "audioinput");
+	const devices = await navigator.mediaDevices.enumerateDevices();
+	hasVideoDevice = devices.some((device) => device.kind === "videoinput");
+	hasAudioDevice = devices.some((device) => device.kind === "audioinput");
 }
 
 // Function to start media
 async function startMedia() {
-  await checkDevices(); // Check for available devices
+	await checkDevices(); // Check for available devices
 
-  const constraints = {
-    video: hasVideoDevice,
-    audio: hasAudioDevice,
-  };
+	const constraints = {
+		video: hasVideoDevice,
+		audio: hasAudioDevice,
+	};
 
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia(constraints);
-  } catch (error) {
-    console.warn("Error accessing media devices:", error);
-    alert("No available media devices!");
-    return;
-  }
+	try {
+		localStream = await navigator.mediaDevices.getUserMedia(constraints);
+	} catch (error) {
+		console.warn("Error accessing media devices:", error);
+		alert("No available media devices!");
+		return;
+	}
 
-  localVideo.srcObject = localStream;
-  updateToggleButtons();
+	localVideo.srcObject = localStream;
+	updateToggleButtons();
 }
 
 // Function to update toggle button states
 function updateToggleButtons() {
-  toggleVideoButton.disabled = !hasVideoDevice;
-  toggleAudioButton.disabled = !hasAudioDevice;
-  toggleVideoButton.textContent = isVideoEnabled
-    ? "Turn video Off"
-    : "Turn video On";
-  toggleAudioButton.textContent = isAudioEnabled ? "Mute" : "Unmute";
+	toggleVideoButton.disabled = !hasVideoDevice;
+	toggleAudioButton.disabled = !hasAudioDevice;
+	toggleVideoButton.textContent = isVideoEnabled
+		? "Turn video Off"
+		: "Turn video On";
+	toggleAudioButton.textContent = isAudioEnabled ? "Mute" : "Unmute";
 }
 
 // Function to start a call
 async function startCall() {
-  await startMedia();
+	await startMedia();
 
-  peerConnection = new RTCPeerConnection(servers);
-  localStream
-    .getTracks()
-    .forEach((track) => peerConnection.addTrack(track, localStream));
+	peerConnection = new RTCPeerConnection(servers);
+	localStream
+		.getTracks()
+		.forEach((track) => peerConnection.addTrack(track, localStream));
 
-  peerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
-      socket.emit("candidate", event.candidate);
-    }
-  };
+	peerConnection.onicecandidate = (event) => {
+		if (event.candidate) {
+			socket.emit("candidate", event.candidate);
+		}
+	};
 
-  peerConnection.ontrack = (event) => {
-    remoteStream.addTrack(event.track); // Add track to remoteStream
-    remoteVideo.srcObject = remoteStream;
-    //remoteVideo.style.transform = "";  // screen sharing
-  };
+	peerConnection.ontrack = (event) => {
+		remoteStream.addTrack(event.track); // Add track to remoteStream
+		remoteVideo.srcObject = remoteStream;
+		//remoteVideo.style.transform = "";  // screen sharing
+	};
 
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-  socket.emit("offer", offer);
+	const offer = await peerConnection.createOffer();
+	await peerConnection.setLocalDescription(offer);
+	socket.emit("offer", offer);
 }
 
 // Function to end a call
 function endCall() {
-  if (localStream) {
-    localStream.getTracks().forEach((track) => track.stop());
-  }
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
-  }
+	if (localStream) {
+		localStream.getTracks().forEach((track) => track.stop());
+	}
+	if (peerConnection) {
+		peerConnection.close();
+		peerConnection = null;
+	}
 
-  localVideo.srcObject = null;
-  remoteVideo.srcObject = null;
-  socket.emit("endCall");
+	localVideo.srcObject = null;
+	remoteVideo.srcObject = null;
+	socket.emit("endCall");
 }
 
 // Handle end call from the other user
 socket.on("endCall", () => {
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
-  }
+	if (peerConnection) {
+		peerConnection.close();
+		peerConnection = null;
+	}
 
-  remoteVideo.srcObject = null;
+	remoteVideo.srcObject = null;
 });
 
 // Toggle Video On/Off
 toggleVideoButton.addEventListener("click", () => {
-  if (!hasVideoDevice) return;
-  isVideoEnabled = !isVideoEnabled;
-  localStream
-    .getVideoTracks()
-    .forEach((track) => (track.enabled = isVideoEnabled));
-  updateToggleButtons();
+	if (!hasVideoDevice) return;
+	isVideoEnabled = !isVideoEnabled;
+	localStream
+		.getVideoTracks()
+		.forEach((track) => (track.enabled = isVideoEnabled));
+	updateToggleButtons();
 });
 
 // Toggle Audio On/Off
 toggleAudioButton.addEventListener("click", () => {
-  if (!hasAudioDevice) return;
-  isAudioEnabled = !isAudioEnabled;
-  localStream
-    .getAudioTracks()
-    .forEach((track) => (track.enabled = isAudioEnabled));
-  updateToggleButtons();
+	if (!hasAudioDevice) return;
+	isAudioEnabled = !isAudioEnabled;
+	localStream
+		.getAudioTracks()
+		.forEach((track) => (track.enabled = isAudioEnabled));
+	updateToggleButtons();
 });
 
 // Function to scroll to the bottom of the messages list
 function scrollToBottom() {
-  messagesList.scrollTop = messagesList.scrollHeight;
+	const chatMessages = document.querySelector(".chat-messages");
+	const lastMessage = messagesList.lastElementChild;
+
+	if (lastMessage) {
+		// Scroll to show last message fully
+		lastMessage.scrollIntoView({
+			behavior: "smooth",
+			block: "end",
+		});
+	}
 }
 
 messageInput.addEventListener("keydown", function (event) {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault(); // Prevent new line in input
-    sendMessage(); // Call the sendMessage function
-  }
+	if (event.key === "Enter" && !event.shiftKey) {
+		event.preventDefault(); // Prevent new line in input
+		sendMessage(); // Call the sendMessage function
+	}
+});
+
+socket.on("typing", (isTyping) => {
+	typingIndicator.style.display = isTyping ? "flex" : "none";
+	if (isTyping) {
+		const chatMessages = document.querySelector(".chat-messages");
+		const threshold = 100;
+		const shouldScroll =
+			chatMessages.scrollHeight -
+				chatMessages.scrollTop -
+				chatMessages.clientHeight <
+			threshold;
+
+		if (shouldScroll) {
+			scrollToBottom();
+		}
+	}
+});
+
+messageInput.addEventListener("input", () => {
+	const hasContent = messageInput.value.trim().length > 0;
+
+	// Always emit typing status when input changes
+	socket.emit("typing", hasContent);
+
+	// Manage the timeout for hiding the indicator
+	clearTimeout(typingTimeout);
+	if (hasContent) {
+		typingTimeout = setTimeout(() => {
+			socket.emit("typing", false);
+		}, 1000);
+	}
 });
 
 function sendMessage() {
-  const message = messageInput.value.trim();
-  if (message) {
-    // Emit the message
-    socket.emit("message", { text: message });
+	const message = messageInput.value.trim();
+	if (message) {
+		if (typingTimeout) {
+			clearTimeout(typingTimeout);
+			socket.emit("typing", false);
+		}
 
-    // Display the message immediately
-    addMessageToChat(`You: ${message}`, true);
-    messageInput.value = "";
-    scrollToBottom();
-  }
+		socket.emit("message", { text: message });
+		addMessageToChat(`You: ${message}`, true);
+		messageInput.value = "";
+		scrollToBottom();
+	}
 }
 
 // Listen for incoming messages:
 socket.on("message", (data) => {
-  addMessageToChat(`Peer: ${data.text}`);
-  scrollToBottom(); // Autoscroll to the bottom
+	addMessageToChat(`Peer: ${data.text}`);
+	scrollToBottom();
 });
 
 // Helper function to append a new message to the chat:
 function addMessageToChat(msg, isOwnMessage = false) {
-  const li = document.createElement("li");
-  li.textContent = msg;
-  li.style.whiteSpace = "pre-wrap"; // Preserve multiline formatting
-  li.style.backgroundColor = isOwnMessage ? "#d1ffd1" : "#d1e0ff";
-  messagesList.appendChild(li);
+	const li = document.createElement("li");
+	li.setAttribute("data-own", isOwnMessage.toString()); // This enables the CSS bubble styling
+
+	// Preserve your original formatting requirements
+	li.style.whiteSpace = "pre-wrap"; // Keep multiline support
+	li.textContent = msg; // Keep simple text content
+
+	// Remove the inline background colors (now handled by CSS)
+	li.style.backgroundColor = "";
+
+	messagesList.appendChild(li);
+	scrollToBottom(); // Keep your existing auto-scroll
 }
 
 // Variable to keep track of the recorder and recording state
@@ -189,106 +241,128 @@ let isRecording = false;
 
 // Function to draw video streams onto the canvas
 function drawVideosToCanvas() {
-  if (!isRecording) return;
+	if (!isRecording) return;
 
-  // Set canvas dimensions to match the video dimensions
-  recordingCanvas.width = localVideo.videoWidth + remoteVideo.videoWidth;
-  recordingCanvas.height = Math.max(localVideo.videoHeight, remoteVideo.videoHeight);
+	// Set canvas dimensions to match the video dimensions
+	recordingCanvas.width = localVideo.videoWidth + remoteVideo.videoWidth;
+	recordingCanvas.height = Math.max(
+		localVideo.videoHeight,
+		remoteVideo.videoHeight
+	);
 
-  // Clear the canvas
-  recordingContext.clearRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+	// Clear the canvas
+	recordingContext.clearRect(
+		0,
+		0,
+		recordingCanvas.width,
+		recordingCanvas.height
+	);
 
-  // Draw local video
-  recordingContext.drawImage(localVideo, 0, 0, localVideo.videoWidth, localVideo.videoHeight);
+	// Draw local video
+	recordingContext.drawImage(
+		localVideo,
+		0,
+		0,
+		localVideo.videoWidth,
+		localVideo.videoHeight
+	);
 
-  // Draw remote video
-  recordingContext.drawImage(remoteVideo, localVideo.videoWidth, 0, remoteVideo.videoWidth, remoteVideo.videoHeight);
+	// Draw remote video
+	recordingContext.drawImage(
+		remoteVideo,
+		localVideo.videoWidth,
+		0,
+		remoteVideo.videoWidth,
+		remoteVideo.videoHeight
+	);
 
-  // Continue drawing at the next animation frame
-  requestAnimationFrame(drawVideosToCanvas);
+	// Continue drawing at the next animation frame
+	requestAnimationFrame(drawVideosToCanvas);
 }
 
 // Start/Stop recording
 startRecordingButton.addEventListener("click", async () => {
-  if (isRecording) {
-    // Stop recording
-    recorder.stop();
-    isRecording = false;
-    startRecordingButton.textContent = "Start recording";
-  } else {
-    // Start drawing videos to canvas
-    isRecording = true;
-    drawVideosToCanvas();
+	if (isRecording) {
+		// Stop recording
+		recorder.stop();
+		isRecording = false;
+		startRecordingButton.textContent = "Start recording";
+	} else {
+		// Start drawing videos to canvas
+		isRecording = true;
+		drawVideosToCanvas();
 
-    // Create MediaRecorder from the canvas stream
-    const canvasStream = recordingCanvas.captureStream();
+		// Create MediaRecorder from the canvas stream
+		const canvasStream = recordingCanvas.captureStream();
 
-    // Combine audio tracks from local and remote streams
-    const audioContext = new AudioContext();
-    const destination = audioContext.createMediaStreamDestination();
+		// Combine audio tracks from local and remote streams
+		const audioContext = new AudioContext();
+		const destination = audioContext.createMediaStreamDestination();
 
-    if (localStream.getAudioTracks().length > 0) {
-      const localAudioSource = audioContext.createMediaStreamSource(localStream);
-      localAudioSource.connect(destination);
-    }
+		if (localStream.getAudioTracks().length > 0) {
+			const localAudioSource =
+				audioContext.createMediaStreamSource(localStream);
+			localAudioSource.connect(destination);
+		}
 
-    if (remoteStream.getAudioTracks().length > 0) {
-      const remoteAudioSource = audioContext.createMediaStreamSource(remoteStream);
-      remoteAudioSource.connect(destination);
-    }
+		if (remoteStream.getAudioTracks().length > 0) {
+			const remoteAudioSource =
+				audioContext.createMediaStreamSource(remoteStream);
+			remoteAudioSource.connect(destination);
+		}
 
-    // Combine canvas stream and audio tracks
-    const combinedStream = new MediaStream([
-      ...canvasStream.getVideoTracks(),
-      ...destination.stream.getAudioTracks(),
-    ]);
+		// Combine canvas stream and audio tracks
+		const combinedStream = new MediaStream([
+			...canvasStream.getVideoTracks(),
+			...destination.stream.getAudioTracks(),
+		]);
 
-    recorder = new MediaRecorder(combinedStream);
+		recorder = new MediaRecorder(combinedStream);
 
-    const chunks = [];
+		const chunks = [];
 
-    recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        chunks.push(event.data);
-      }
-    };
+		recorder.ondataavailable = (event) => {
+			if (event.data.size > 0) {
+				chunks.push(event.data);
+			}
+		};
 
-    recorder.onstop = async () => {
-      console.log("Recording stopped.");
-      const blob = new Blob(chunks, { type: "video/webm" });
+		recorder.onstop = async () => {
+			console.log("Recording stopped.");
+			const blob = new Blob(chunks, { type: "video/webm" });
 
-      // Save the file using File System API if available
-      if (window.showSaveFilePicker) {
-        try {
-          const handle = await showSaveFilePicker({
-            suggestedName: "recording.webm",
-            types: [
-              {
-                description: "WebM Video",
-                accept: { "video/webm": [".webm"] },
-              },
-            ],
-          });
-          const writable = await handle.createWritable();
-          await writable.write(blob);
-          await writable.close();
-        } catch (error) {
-          console.error("Error saving file:", error);
-        }
-      } else {
-        // Fallback to a download link
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "recording.webm";
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    };
+			// Save the file using File System API if available
+			if (window.showSaveFilePicker) {
+				try {
+					const handle = await showSaveFilePicker({
+						suggestedName: "recording.webm",
+						types: [
+							{
+								description: "WebM Video",
+								accept: { "video/webm": [".webm"] },
+							},
+						],
+					});
+					const writable = await handle.createWritable();
+					await writable.write(blob);
+					await writable.close();
+				} catch (error) {
+					console.error("Error saving file:", error);
+				}
+			} else {
+				// Fallback to a download link
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement("a");
+				a.href = url;
+				a.download = "recording.webm";
+				a.click();
+				URL.revokeObjectURL(url);
+			}
+		};
 
-    recorder.start();
-    startRecordingButton.textContent = "Stop recording";
-  }
+		recorder.start();
+		startRecordingButton.textContent = "Stop recording";
+	}
 });
 
 // Event Listeners
@@ -297,38 +371,38 @@ endCallButton.addEventListener("click", endCall);
 
 // Handle incoming WebRTC signals
 socket.on("offer", async (offer) => {
-  if (!peerConnection) {
-    await startMedia();
-    peerConnection = new RTCPeerConnection(servers);
-    localStream
-      .getTracks()
-      .forEach((track) => peerConnection.addTrack(track, localStream));
+	if (!peerConnection) {
+		await startMedia();
+		peerConnection = new RTCPeerConnection(servers);
+		localStream
+			.getTracks()
+			.forEach((track) => peerConnection.addTrack(track, localStream));
 
-    peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("candidate", event.candidate);
-      }
-    };
+		peerConnection.onicecandidate = (event) => {
+			if (event.candidate) {
+				socket.emit("candidate", event.candidate);
+			}
+		};
 
-    peerConnection.ontrack = (event) => {
-      remoteStream.addTrack(event.track); // Add track to remoteStream
-      remoteVideo.srcObject = remoteStream;
-      remoteVideo.style.transform = "scaleX(1)";
-    };
-  }
+		peerConnection.ontrack = (event) => {
+			remoteStream.addTrack(event.track); // Add track to remoteStream
+			remoteVideo.srcObject = remoteStream;
+			remoteVideo.style.transform = "scaleX(1)";
+		};
+	}
 
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-  socket.emit("answer", answer);
+	await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+	const answer = await peerConnection.createAnswer();
+	await peerConnection.setLocalDescription(answer);
+	socket.emit("answer", answer);
 });
 
 socket.on("answer", async (answer) => {
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+	await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
 });
 
 socket.on("candidate", async (candidate) => {
-  await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+	await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
 });
 
 // Join the room
@@ -336,76 +410,81 @@ const roomId = window.location.pathname.split("/")[1];
 socket.emit("join-room", roomId);
 
 socket.on("room-full", () => {
-  window.location.href = "/room-full"; // Redirect to the home page or any other URL
+	window.location.href = "/room-full"; // Redirect to the home page or any other URL
 });
 
 socket.on("user-disconnected", () => {
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
-  }
+	if (peerConnection) {
+		peerConnection.close();
+		peerConnection = null;
+	}
 
-  remoteVideo.srcObject = null;
+	remoteVideo.srcObject = null;
 });
 
 // Add event listener to toggle chat visibility
 chatIcon.addEventListener("click", () => {
-  // Toggle the display property of the chat box
-  chatBox.style.display = "flex"; // Show the chat box
-  chatIcon.style.display = "none"; // Hide the chat icon
+	// Toggle the display property of the chat box
+	chatBox.style.display = "flex"; // Show the chat box
+	chatIcon.style.display = "none"; // Hide the chat icon
 });
 
 // Add event listener to close the chat box
 closeChatButton.addEventListener("click", () => {
-  // Hide the chat box and show the chat icon
-  chatBox.style.display = "none"; // Hide the chat box
-  chatIcon.style.display = "block"; // Show the chat icon
+	// Hide the chat box and show the chat icon
+	chatBox.style.display = "none"; // Hide the chat box
+	chatIcon.style.display = "block"; // Show the chat icon
 });
 
 // Screen sharing
 // ----------------- SCREEN SHARING FIX -----------------
 async function startScreenShare() {
-  try {
-      //screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } }
-    });
+	try {
+		//screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+		screenStream = await navigator.mediaDevices.getDisplayMedia({
+			video: {
+				width: { ideal: 1920 },
+				height: { ideal: 1080 },
+				frameRate: { ideal: 30 },
+			},
+		});
 
+		const sender = peerConnection
+			.getSenders()
+			.find((s) => s.track.kind === "video");
+		sender.replaceTrack(screenStream.getVideoTracks()[0]);
 
-      const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
-      sender.replaceTrack(screenStream.getVideoTracks()[0]);
+		localVideo.srcObject = screenStream;
+		localVideo.style.transform = "scaleX(1)";
 
-      localVideo.srcObject = screenStream;
-      localVideo.style.transform = "scaleX(1)";
+		isSharingScreen = true;
+		startShareBtn.disabled = true;
+		stopShareBtn.disabled = false;
 
-      isSharingScreen = true;
-      startShareBtn.disabled = true;
-      stopShareBtn.disabled = false;
-
-      socket.emit("share-screen");
-  } catch (error) {
-      console.error("Error sharing screen:", error);
-  }
+		socket.emit("share-screen");
+	} catch (error) {
+		console.error("Error sharing screen:", error);
+	}
 }
 
 function stopScreenShare() {
-  if (screenStream) {
-      screenStream.getTracks().forEach(track => track.stop());
-  }
+	if (screenStream) {
+		screenStream.getTracks().forEach((track) => track.stop());
+	}
 
-  const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
-  sender.replaceTrack(localStream.getVideoTracks()[0]);
+	const sender = peerConnection
+		.getSenders()
+		.find((s) => s.track.kind === "video");
+	sender.replaceTrack(localStream.getVideoTracks()[0]);
 
+	isSharingScreen = false;
+	startShareBtn.disabled = false;
+	stopShareBtn.disabled = true;
 
+	socket.emit("stop-share-screen");
 
-  isSharingScreen = false;
-  startShareBtn.disabled = false;
-  stopShareBtn.disabled = true;
-
-  socket.emit("stop-share-screen");
-
-  localVideo.style.transform = "scaleX(1)"; // Remove flip when stopping screen share
-  localVideo.srcObject = localStream;
+	localVideo.style.transform = "scaleX(1)"; // Remove flip when stopping screen share
+	localVideo.srcObject = localStream;
 }
 
 // Event listeners
@@ -416,42 +495,47 @@ stopShareBtn.addEventListener("click", stopScreenShare);
 
 // Handle stopping screen share
 socket.on("stop-share-screen", () => {
-  remoteVideo.srcObject = remoteStream;
-  remoteVideo.style.transform = "scaleX(1)";
+	remoteVideo.srcObject = remoteStream;
+	remoteVideo.style.transform = "scaleX(1)";
 });
 
 socket.on("share-screen", () => {
-  remoteVideo.style.transform = "scaleX(1)"; // Show it correctly to you
-  remoteVideo.style.width = "100%"; // Ensures full width
-  remoteVideo.style.height = "100%";
+	remoteVideo.style.transform = "scaleX(1)"; // Show it correctly to you
+	remoteVideo.style.width = "100%"; // Ensures full width
+	remoteVideo.style.height = "100%";
 });
-
 
 //full screen
 function toggleFullscreen(videoElement) {
-    if (!document.fullscreenElement) {
-        if (videoElement.requestFullscreen) {
-            videoElement.requestFullscreen();
-        } else if (videoElement.mozRequestFullScreen) { // Firefox
-            videoElement.mozRequestFullScreen();
-        } else if (videoElement.webkitRequestFullscreen) { // Chrome, Safari, Opera
-            videoElement.webkitRequestFullscreen();
-        } else if (videoElement.msRequestFullscreen) { // IE/Edge
-            videoElement.msRequestFullscreen();
-        }
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.mozCancelFullScreen) { // Firefox
-            document.mozCancelFullScreen();
-        } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
-            document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) { // IE/Edge
-            document.msExitFullscreen();
-        }
-    }
+	if (!document.fullscreenElement) {
+		if (videoElement.requestFullscreen) {
+			videoElement.requestFullscreen();
+		} else if (videoElement.mozRequestFullScreen) {
+			// Firefox
+			videoElement.mozRequestFullScreen();
+		} else if (videoElement.webkitRequestFullscreen) {
+			// Chrome, Safari, Opera
+			videoElement.webkitRequestFullscreen();
+		} else if (videoElement.msRequestFullscreen) {
+			// IE/Edge
+			videoElement.msRequestFullscreen();
+		}
+	} else {
+		if (document.exitFullscreen) {
+			document.exitFullscreen();
+		} else if (document.mozCancelFullScreen) {
+			// Firefox
+			document.mozCancelFullScreen();
+		} else if (document.webkitExitFullscreen) {
+			// Chrome, Safari, Opera
+			document.webkitExitFullscreen();
+		} else if (document.msExitFullscreen) {
+			// IE/Edge
+			document.msExitFullscreen();
+		}
+	}
 }
 
 // Attach double-click event to both videos
-localVideo.addEventListener('dblclick', () => toggleFullscreen(localVideo));
-remoteVideo.addEventListener('dblclick', () => toggleFullscreen(remoteVideo));
+localVideo.addEventListener("dblclick", () => toggleFullscreen(localVideo));
+remoteVideo.addEventListener("dblclick", () => toggleFullscreen(remoteVideo));
