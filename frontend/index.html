@@ -1,92 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Video Call App</title>
-		<link rel="stylesheet" href="style.css" />
-		<!-- Add Font Awesome CDN -->
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-	</head>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Call App</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- Add Font Awesome CDN -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+</head>
 
-	<body>
-		<h1>Video Call App</h1>
-		<button id="dark-mode-toggle" class="theme-toggle">
-			<i class="fas fa-sun"></i>
-			<i class="fas fa-moon" style="display: none"></i>
-		</button>
-		<div id="controls">
-			<button id="startCall">
-				<i class="fa fa-phone" aria-hidden="true"></i> Start Call
-			</button>
-			<button id="endCall"><i class="fas fa-phone-slash"></i> End Call</button>
-			<button id="toggle-audio">
-				<i class="fa fa-retweet" aria-hidden="true"></i> Toggle Audio
-			</button>
-			<button id="toggle-video">
-				<i class="fa fa-retweet" aria-hidden="true"></i> Toggle Video
-			</button>
-			<button id="start-recording">
-				<i class="fa fa-video-camera" aria-hidden="true"></i> Start recording
-			</button>
-			<!--screen shearing-->
-			<div class="buttons">
-				<button id="startShare">
-					<i class="fas fa-display"></i> Start Screen Share
-				</button>
-				<button id="stopShare" disabled>
-					<i class="fas fa-stop"></i> Stop Screen Share
-				</button>
-			</div>
-		</div>
-		<div id="video-grid">
-			<video id="localVideo" autoplay muted></video>
-			<video id="remoteVideo" autoplay></video>
-			<canvas id="recordingCanvas" style="display: none"></canvas>
-		</div>
-		<div id="chat">
-			<div class="chat-header">
-				<h2>Chat</h2>
-				<button id="close-chat" aria-label="Close chat">
-					<i class="fas fa-times"></i>
-				</button>
-			</div>
+<body>
+    <nav>
+        <div class="nav-title">Video Call App</div>
+        <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Help</a></li>
+        </ul>
+    </nav>
 
-			<div class="chat-messages">
-				<div class="message-container">
-					<ul id="messages"></ul>
-				</div>
-				<div id="typing-indicator">
-					<div class="typing-dots">
-						<span></span>
-						<span></span>
-						<span></span>
-					</div>
-					<span class="typing-text">is typing...</span>
-				</div>
-			</div>
+    <div id="controls">
+        <button id="startCall">
+            <i class="fa fa-phone" aria-hidden="true"></i> Start Call
+        </button>
+        <button id="endCall">
+            <i class="fas fa-phone-slash"></i> End Call
+        </button>
+        <button id="toggle-audio">
+            <i class="fa fa-microphone" aria-hidden="true"></i> Toggle Audio
+        </button>
+        <button id="toggle-video">
+            <i class="fa fa-video" aria-hidden="true"></i> Toggle Video
+        </button>
+        <button id="start-recording">
+            <i class="fas fa-circle" aria-hidden="true"></i> Start recording
+        </button>
+    </div>
 
-			<div id="message-container">
-				<textarea
-					id="message"
-					placeholder="Type your message here..."
-					rows="3"
-					aria-label="Type your message"></textarea>
-				<button id="send-message">
-					<i class="fas fa-paper-plane"></i>
-					<span class="sr-only">Send</span>
-				</button>
-			</div>
-		</div>
+    <div class="buttons">
+        <button id="startShare">
+            <i class="fas fa-display"></i> Start Screen Share
+        </button>
+        <button id="stopShare" disabled>
+            <i class="fas fa-stop"></i> Stop Screen Share
+        </button>
+    </div>
 
-		<!-- Minimized chat icon -->
-		<div id="chat-icon"></div>
-		<script src="/socket.io/socket.io.js"></script>
-		<script src="main.js"></script>
-	</body>
+    <div id="video-grid">
+        <video id="localVideo" autoplay muted></video>
+        <video id="remoteVideo" autoplay></video>
+        <canvas id="recordingCanvas" style="display: none"></canvas>
+    </div>
+
+    <div id="chat">
+        <div class="chat-header">
+            <h2>Chat</h2>
+            <button id="close-chat" aria-label="Close chat">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="chat-messages">
+            <div class="message-container">
+                <ul id="messages"></ul>
+            </div>
+            <div id="typing-indicator">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span class="typing-text">is typing...</span>
+            </div>
+        </div>
+
+        <div id="message-container">
+            <textarea
+                id="message"
+                placeholder="Type your message here..."
+                rows="2"
+                aria-label="Type your message"></textarea>
+            <button id="send-message">
+                <i class="fas fa-paper-plane"></i>
+                <span class="sr-only">Send</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Minimized chat icon -->
+    <div id="chat-icon"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="main.js"></script>
+</body>
 </html>
