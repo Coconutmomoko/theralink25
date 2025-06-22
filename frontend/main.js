@@ -34,6 +34,7 @@ let hasAudioDevice = false;
 //Screen sharing
 let screenStream;
 let isSharingScreen = false;
+let originalLocalStream; // 保存原始摄像头流
 
 // Theme Handling
 function toggleDarkMode() {
@@ -84,6 +85,7 @@ async function startMedia() {
 
 	try {
 		localStream = await navigator.mediaDevices.getUserMedia(constraints);
+		originalLocalStream = localStream; // 保存原始流
 	} catch (error) {
 		console.warn("Error accessing media devices:", error);
 		alert("No available media devices!");
@@ -135,6 +137,10 @@ function endCall() {
 	if (localStream) {
 		localStream.getTracks().forEach((track) => track.stop());
 	}
+	if (screenStream) {
+		screenStream.getTracks().forEach((track) => track.stop());
+		screenStream = null;
+	}
 	if (peerConnection) {
 		peerConnection.close();
 		peerConnection = null;
@@ -142,6 +148,9 @@ function endCall() {
 
 	localVideo.srcObject = null;
 	remoteVideo.srcObject = null;
+	isSharingScreen = false;
+	startShareBtn.disabled = false;
+	stopShareBtn.disabled = true;
 	socket.emit("endCall");
 }
 
@@ -466,60 +475,113 @@ closeChatButton.addEventListener("click", () => {
 	chatIcon.style.display = "block"; // Show the chat icon
 });
 
-// Screen sharing
-// ----------------- SCREEN SHARING FIX -----------------
+// Screen sharing - 修复后的版本
 async function startScreenShare() {
 	try {
-		//screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+		// 检查是否有活跃的对等连接
+		if (!peerConnection) {
+			console.error("No active peer connection");
+			alert("Please start a call first before sharing screen");
+			return;
+		}
+
+		// 获取屏幕共享流
 		screenStream = await navigator.mediaDevices.getDisplayMedia({
 			video: {
 				width: { ideal: 1920 },
 				height: { ideal: 1080 },
 				frameRate: { ideal: 30 },
+				cursor: 'always'
 			},
+			audio: true // 包含系统音频
 		});
 
-		const sender = peerConnection
+		// 找到视频发送器并替换轨道
+		const videoSender = peerConnection
 			.getSenders()
-			.find((s) => s.track.kind === "video");
-		sender.replaceTrack(screenStream.getVideoTracks()[0]);
+			.find((s) => s.track && s.track.kind === "video");
+		
+		if (videoSender) {
+			await videoSender.replaceTrack(screenStream.getVideoTracks()[0]);
+		}
 
+		// 更新本地视频显示
 		localVideo.srcObject = screenStream;
 		localVideo.style.transform = "scaleX(1)";
 
+		// 设置状态
 		isSharingScreen = true;
 		startShareBtn.disabled = true;
 		stopShareBtn.disabled = false;
 
+		// 监听屏幕共享结束事件（用户点击浏览器的停止共享按钮）
+		screenStream.getVideoTracks()[0].onended = () => {
+			console.log("Screen sharing ended by user");
+			stopScreenShare();
+		};
+
 		socket.emit("share-screen");
+		console.log("Screen sharing started successfully");
 	} catch (error) {
 		console.error("Error sharing screen:", error);
+		alert("Failed to start screen sharing: " + error.message);
 	}
 }
 
-function stopScreenShare() {
-	if (screenStream) {
-		screenStream.getTracks().forEach((track) => track.stop());
+async function stopScreenShare() {
+	try {
+		// 停止屏幕共享流
+		if (screenStream) {
+			screenStream.getTracks().forEach((track) => {
+				track.stop();
+			});
+			screenStream = null;
+		}
+
+		// 检查是否有活跃的对等连接
+		if (!peerConnection) {
+			console.error("No active peer connection");
+			return;
+		}
+
+		// 重新获取摄像头流（如果原始流已停止）
+		if (!originalLocalStream || originalLocalStream.getTracks().some(track => track.readyState === 'ended')) {
+			const constraints = {
+				video: hasVideoDevice,
+				audio: hasAudioDevice,
+			};
+			
+			originalLocalStream = await navigator.mediaDevices.getUserMedia(constraints);
+			localStream = originalLocalStream;
+		}
+
+		// 找到视频发送器并替换回摄像头轨道
+		const videoSender = peerConnection
+			.getSenders()
+			.find((s) => s.track && s.track.kind === "video");
+		
+		if (videoSender && originalLocalStream.getVideoTracks().length > 0) {
+			await videoSender.replaceTrack(originalLocalStream.getVideoTracks()[0]);
+		}
+
+		// 恢复本地视频显示
+		localVideo.srcObject = originalLocalStream;
+		localVideo.style.transform = "scaleX(-1)"; // 恢复镜像效果
+
+		// 更新状态
+		isSharingScreen = false;
+		startShareBtn.disabled = false;
+		stopShareBtn.disabled = true;
+
+		socket.emit("stop-share-screen");
+		console.log("Screen sharing stopped successfully");
+	} catch (error) {
+		console.error("Error stopping screen share:", error);
+		alert("Failed to stop screen sharing: " + error.message);
 	}
-
-	const sender = peerConnection
-		.getSenders()
-		.find((s) => s.track.kind === "video");
-	sender.replaceTrack(localStream.getVideoTracks()[0]);
-
-	isSharingScreen = false;
-	startShareBtn.disabled = false;
-	stopShareBtn.disabled = true;
-
-	socket.emit("stop-share-screen");
-
-	localVideo.style.transform = "scaleX(1)"; // Remove flip when stopping screen share
-	localVideo.srcObject = localStream;
 }
 
 // Event listeners
-startCallButton.addEventListener("click", startCall);
-endCallButton.addEventListener("click", endCall);
 startShareBtn.addEventListener("click", startScreenShare);
 stopShareBtn.addEventListener("click", stopScreenShare);
 if (darkModeToggle) {
